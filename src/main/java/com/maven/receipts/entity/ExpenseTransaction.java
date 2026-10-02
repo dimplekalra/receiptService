@@ -6,6 +6,8 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "transactions", uniqueConstraints = {
@@ -30,6 +32,14 @@ public class ExpenseTransaction {
     @JoinColumn(name = "receipt_id", nullable = false, unique = true)
     private Receipt receipt;
 
+    @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Tax> taxes = new ArrayList<>();
+
+    @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<LineItem> lineItems = new ArrayList<>();
+
     @Column(nullable = false)
     private String merchant;
 
@@ -49,4 +59,14 @@ public class ExpenseTransaction {
     @Column(name = "itemize_status", nullable = false)
     @Builder.Default
     private ItemizeStatus itemizeStatus = ItemizeStatus.NEEDS_REVIEW;
+
+    public void addTax(Tax tax) {
+        taxes.add(tax);
+        tax.setTransaction(this);
+    }
+
+    public void addLineItem(LineItem item) {
+        lineItems.add(item);
+        item.setTransaction(this);
+    }
 }
