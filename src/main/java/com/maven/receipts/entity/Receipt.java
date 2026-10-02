@@ -20,6 +20,9 @@ public class Receipt {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @OneToOne(mappedBy = "receipt", fetch = FetchType.LAZY)
+    private ExpenseTransaction transaction;
+
     /**
      * SHA-256 hash of uploaded file.
      * Prevents duplicate uploads.
