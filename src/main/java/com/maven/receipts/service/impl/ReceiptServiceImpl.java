@@ -1,16 +1,25 @@
 package com.maven.receipts.service.impl;
 
+import com.maven.receipts.config.StorageProperties;
+import com.maven.receipts.dto.OcrResponse;
+import com.maven.receipts.dto.ReceiptResponse;
 import com.maven.receipts.dto.ReceiptUploadResponse;
+import com.maven.receipts.dto.TransactionResponse;
+import com.maven.receipts.entity.ExpenseTransaction;
 import com.maven.receipts.entity.Receipt;
 import com.maven.receipts.exception.InvalidReceiptFileException;
+import com.maven.receipts.exception.ReceiptNotFoundException;
 import com.maven.receipts.hash.HashService;
+import com.maven.receipts.repository.ExpenseTransactionRepository;
 import com.maven.receipts.repository.ReceiptRepository;
 import com.maven.receipts.service.ReceiptService;
 import com.maven.receipts.storage.StorageService;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.nio.file.Paths;
 
@@ -27,16 +36,21 @@ public class ReceiptServiceImpl implements ReceiptService {
     };
 
     private final ReceiptRepository receiptRepository;
+    private final ExpenseTransactionRepository expenseTransactionRepository;
     private final HashService hashService;
     private final StorageService storageService;
+    private final StorageProperties storageProperties;
 
     public ReceiptServiceImpl(
             ReceiptRepository receiptRepository,
             HashService hashService,
-            StorageService storageService) {
+            StorageService storageService,
+            StorageProperties storageProperties, ExpenseTransactionRepository expenseTransactionRepository) {
         this.receiptRepository = receiptRepository;
         this.hashService = hashService;
         this.storageService = storageService;
+        this.storageProperties = storageProperties;
+        this.expenseTransactionRepository = expenseTransactionRepository;
     }
 
     @Override
@@ -62,6 +76,45 @@ public class ReceiptServiceImpl implements ReceiptService {
                 .orElseGet(() -> createReceipt(file, fileHash));
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public ReceiptResponse getReceipt(Long receiptId) {
+
+        Receipt receipt = receiptRepository.findById(receiptId)
+                .orElseThrow(() -> new ReceiptNotFoundException(receiptId));
+
+        Long transactionId = null;
+
+        if (receipt.getTransaction() != null) {
+            transactionId = receipt.getTransaction().getId();
+        }
+
+        return new ReceiptResponse(
+                receipt.getId(),
+                receipt.getOriginalFilename(),
+                receipt.getUploadedAt(),
+                receipt.isProcessed(),
+                transactionId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public OcrResponse getOcr(Long receiptId) {
+
+        Receipt receipt = receiptRepository.findById(receiptId)
+                .orElseThrow(() -> new ReceiptNotFoundException(receiptId));
+
+        if (!receipt.isProcessed()) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Receipt has not been processed yet.");
+        }
+
+        return new OcrResponse(
+                receiptId,
+                receipt.getOcrText());
+    }
+
     private ReceiptUploadResponse createReceipt(
             MultipartFile file,
             String fileHash) {
@@ -72,7 +125,10 @@ public class ReceiptServiceImpl implements ReceiptService {
                     .fileHash(fileHash)
                     .originalFilename(safeOriginalFilename(file))
                     .storedFilename(storedFilename)
-                    .storagePath(storedFilename)
+                    .storagePath(
+                            storageProperties.getUploadDirectory()
+                                    + java.io.File.separator
+                                    + storedFilename)
                     .processed(false)
                     .build();
 
