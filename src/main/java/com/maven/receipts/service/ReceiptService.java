@@ -3,7 +3,6 @@ package com.maven.receipts.service;
 import com.maven.receipts.dto.OcrResponse;
 import com.maven.receipts.dto.ReceiptResponse;
 import com.maven.receipts.dto.ReceiptUploadResponse;
-import com.maven.receipts.dto.TransactionResponse;
 
 import org.springframework.web.multipart.MultipartFile;
 

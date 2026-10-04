@@ -4,13 +4,10 @@ import com.maven.receipts.config.StorageProperties;
 import com.maven.receipts.dto.OcrResponse;
 import com.maven.receipts.dto.ReceiptResponse;
 import com.maven.receipts.dto.ReceiptUploadResponse;
-import com.maven.receipts.dto.TransactionResponse;
-import com.maven.receipts.entity.ExpenseTransaction;
 import com.maven.receipts.entity.Receipt;
 import com.maven.receipts.exception.InvalidReceiptFileException;
 import com.maven.receipts.exception.ReceiptNotFoundException;
 import com.maven.receipts.hash.HashService;
-import com.maven.receipts.repository.ExpenseTransactionRepository;
 import com.maven.receipts.repository.ReceiptRepository;
 import com.maven.receipts.service.ReceiptService;
 import com.maven.receipts.storage.StorageService;
@@ -36,7 +33,6 @@ public class ReceiptServiceImpl implements ReceiptService {
     };
 
     private final ReceiptRepository receiptRepository;
-    private final ExpenseTransactionRepository expenseTransactionRepository;
     private final HashService hashService;
     private final StorageService storageService;
     private final StorageProperties storageProperties;
@@ -45,12 +41,11 @@ public class ReceiptServiceImpl implements ReceiptService {
             ReceiptRepository receiptRepository,
             HashService hashService,
             StorageService storageService,
-            StorageProperties storageProperties, ExpenseTransactionRepository expenseTransactionRepository) {
+            StorageProperties storageProperties) {
         this.receiptRepository = receiptRepository;
         this.hashService = hashService;
         this.storageService = storageService;
         this.storageProperties = storageProperties;
-        this.expenseTransactionRepository = expenseTransactionRepository;
     }
 
     @Override

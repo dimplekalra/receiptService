@@ -69,4 +69,36 @@ public class ExpenseTransaction {
         lineItems.add(item);
         item.setTransaction(this);
     }
+
+    public void replaceTaxes(List<Tax> taxes) {
+
+        this.taxes.clear();
+
+        for (Tax tax : taxes) {
+            addTax(tax);
+        }
+    }
+
+    public void replaceLineItems(List<LineItem> items) {
+
+        this.lineItems.clear();
+
+        for (LineItem item : items) {
+            addLineItem(item);
+        }
+    }
+
+    public BigDecimal getItemTotal() {
+
+        return lineItems.stream()
+                .map(LineItem::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public BigDecimal getTaxTotal() {
+
+        return taxes.stream()
+                .map(Tax::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
 }
