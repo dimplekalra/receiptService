@@ -16,49 +16,48 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class TransactionItemizeServiceImpl implements TransactionItemizeService {
-    private final ExpenseTransactionRepository repository;
-    private final ReceiptParser parser;
-    private final TransactionMapper mapper;
-    private final MoneyReconciliationService reconciliationService;
+        private final ExpenseTransactionRepository repository;
+        private final ReceiptParser parser;
+        private final TransactionMapper mapper;
+        private final MoneyReconciliationService reconciliationService;
 
-    @Override
-    @Transactional
-    public TransactionResponse reItemize(Long transactionId) {
+        @Override
+        @Transactional
+        public TransactionResponse reItemize(Long transactionId) {
 
-        ExpenseTransaction transaction = repository.findById(transactionId)
-                .orElseThrow(() -> new TransactionNotFoundException(transactionId));
+                ExpenseTransaction transaction = repository.findById(transactionId)
+                                .orElseThrow(() -> new TransactionNotFoundException(transactionId));
 
-        Receipt receipt = transaction.getReceipt();
+                Receipt receipt = transaction.getReceipt();
 
-        String ocr = receipt.getOcrText();
+                String ocr = receipt.getOcrText();
 
-        ParsedReceipt parsed = parser.parse(ocr);
+                ParsedReceipt parsed = parser.parse(ocr);
 
-        List<LineItem> items = parsed.lineItems()
-                .stream()
-                .map(item -> LineItem.builder()
-                        .description(item.description())
-                        .amount(item.amount())
-                        .build())
-                .toList();
+                List<LineItem> items = parsed.lineItems()
+                                .stream()
+                                .map(item -> LineItem.builder()
+                                                .description(item.description())
+                                                .amount(item.amount())
+                                                .build())
+                                .toList();
 
-        transaction.replaceLineItems(items);
+                transaction.replaceLineItems(items);
 
-        MoneyReconciliationService.ReconciliationResult result = reconciliationService.reconcile(
-                transaction,
-                items);
+                MoneyReconciliationService.ReconciliationResult result = reconciliationService.reconcile(
+                                transaction,
+                                items);
 
-        transaction.setItemizeStatus(
-                result.matches()
-                        ? ItemizeStatus.COMPLETE
-                        : ItemizeStatus.NEEDS_REVIEW);
+                transaction.setItemizeStatus(
+                                result.matches()
+                                                ? ItemizeStatus.COMPLETE
+                                                : ItemizeStatus.NEEDS_REVIEW);
 
-        return mapper.toResponse(repository.save(transaction));
-    }
+                return mapper.toResponse(repository.save(transaction));
+        }
 }
