@@ -19,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -112,16 +111,6 @@ public class ReceiptProcessingServiceImpl implements ReceiptProcessingService {
                                 .toList();
 
                 transaction.replaceLineItems(items);
-
-                BigDecimal itemTotal = transaction.getLineItems()
-                                .stream()
-                                .map(LineItem::getAmount)
-                                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                BigDecimal taxTotal = transaction.getTaxes()
-                                .stream()
-                                .map(Tax::getAmount)
-                                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
                 MoneyReconciliationService.ReconciliationResult result = reconciliationService.reconcile(
                                 transaction,
