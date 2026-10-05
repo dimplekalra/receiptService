@@ -19,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.nio.file.Paths;
+import java.util.Locale;
 
 @Service
 public class ReceiptServiceImpl implements ReceiptService {
@@ -187,7 +188,10 @@ public class ReceiptServiceImpl implements ReceiptService {
         String filename = file.getOriginalFilename();
 
         if (filename == null || filename.isBlank()) {
-            return "receipt";
+            String extension = extensionForContentType(file.getContentType());
+            return extension.isEmpty()
+                    ? "receipt"
+                    : "receipt." + extension;
         }
 
         /*
@@ -200,6 +204,28 @@ public class ReceiptServiceImpl implements ReceiptService {
         return Paths.get(filename)
                 .getFileName()
                 .toString();
+    }
+
+    private String extensionForContentType(String contentType) {
+
+        if (contentType == null || contentType.isBlank()) {
+            return "";
+        }
+
+        int parametersIndex = contentType.indexOf(';');
+        String mediaType = (parametersIndex >= 0
+                ? contentType.substring(0, parametersIndex)
+                : contentType)
+                .trim()
+                .toLowerCase(Locale.ROOT);
+
+        return switch (mediaType) {
+            case "application/pdf" -> "pdf";
+            case "image/png" -> "png";
+            case "image/jpeg", "image/jpg" -> "jpg";
+            case "text/plain" -> "txt";
+            default -> "";
+        };
     }
 
     private String getExtension(String filename) {

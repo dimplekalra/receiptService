@@ -11,48 +11,48 @@ import java.time.LocalDate;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TransactionMapperTest {
-    private final TransactionMapper mapper = new TransactionMapper();
+        private final TransactionMapper mapper = new TransactionMapper();
 
-    @Test
-    void shouldMapTransaction() {
+        @Test
+        void shouldMapTransactionToResponse() {
 
-        Receipt receipt = Receipt.builder()
-                .id(1L)
-                .build();
+                Receipt receipt = Receipt.builder()
+                                .id(10L)
+                                .build();
 
-        ExpenseTransaction transaction = ExpenseTransaction.builder()
-                .id(10L)
-                .receipt(receipt)
-                .merchant("Cafe")
-                .currency("EUR")
-                .transactionDate(LocalDate.now())
-                .grandTotal(new BigDecimal("15.00"))
-                .itemizeStatus(ItemizeStatus.COMPLETE)
-                .build();
+                ExpenseTransaction tx = ExpenseTransaction.builder()
+                                .id(1L)
+                                .receipt(receipt)
+                                .merchant("Cafe")
+                                .transactionDate(LocalDate.now())
+                                .currency("EUR")
+                                .grandTotal(new BigDecimal("15.50"))
+                                .itemizeStatus(ItemizeStatus.COMPLETE)
+                                .build();
 
-        transaction.addTax(
-                Tax.builder()
-                        .id(1L)
-                        .name("VAT")
-                        .rate(new BigDecimal("0.19"))
-                        .amount(new BigDecimal("2.40"))
-                        .build());
+                tx.addTax(
+                                Tax.builder()
+                                                .name("VAT")
+                                                .rate(new BigDecimal("19"))
+                                                .amount(new BigDecimal("2.50"))
+                                                .build());
 
-        transaction.addLineItem(
-                LineItem.builder()
-                        .id(1L)
-                        .description("Coffee")
-                        .amount(new BigDecimal("12.60"))
-                        .build());
+                tx.addLineItem(
+                                LineItem.builder()
+                                                .description("Coffee")
+                                                .amount(new BigDecimal("13"))
+                                                .build());
 
-        TransactionResponse response = mapper.toResponse(transaction);
+                TransactionResponse response = mapper.toResponse(tx);
 
-        assertEquals(10L, response.id());
-        assertEquals(1L, response.receiptId());
-        assertEquals("Cafe", response.merchant());
-        assertEquals("EUR", response.currency());
+                assertEquals(1L, response.id());
 
-        assertEquals(1, response.taxes().size());
-        assertEquals(1, response.lineItems().size());
-    }
+                assertEquals(10L, response.receiptId());
+
+                assertEquals("Cafe", response.merchant());
+
+                assertEquals(1, response.taxes().size());
+
+                assertEquals(1, response.lineItems().size());
+        }
 }
